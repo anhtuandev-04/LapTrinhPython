@@ -1,0 +1,199 @@
+# # Bài 8B.02 Chương trình quản lý Sinh viên
+# # Xây dựng chương trình cho phép
+# # •	Tải lên danh sách sinh viên của một Lớp từ một tập tin Sinhvien.txt,
+#  hiển thị ra màn hình danh sách sinh viên vừa nhập.
+# # •	Nhập Thông tin sinh viên từ bàn phím
+# # •	Sửa thông tin sinh viên
+# # •	Lưu danh sách sinh viên vào tập tin Sinhvien.txt
+# # •	Hiển thị ra màn hình danh sách các Sinh viên của lớp X
+# # •	Hiển thị ra màn hình danh sách các Sinh viên có tên là Y
+# # •	Lưu danh sách sinh viên thành các tập tin khác nhau với mỗi tập tin là của một Lớp. 
+# Ví dụ Sinhvien_D21CQAT.txt, Sinhvien_D21CQPM.txt,…
+# # Biết rằng, mỗi sinh viên gồm các thông tin: Mã số sinh viên, Họ và chữ lót sinh viên, 
+# Tên sinh viên, Lớp, Quê quán.
+import os
+
+# Khởi tạo một lớp (class) SinhVien
+class SinhVien:
+    def __init__(self, mssv, ho_lot, ten, lop, que_quan):
+        self.mssv = mssv.strip()
+        self.ho_lot = ho_lot.strip()
+        self.ten = ten.strip()
+        self.lop = lop.strip()
+        self.que_quan = que_quan.strip()
+        # Chuỗi đầy đủ để lưu vào tệp
+        self.full_name = f"{self.ho_lot} {self.ten}" 
+
+    def to_file_format(self):
+        """Chuyển thông tin sinh viên thành chuỗi để lưu tệp."""
+        return f"{self.mssv},{self.full_name},{self.lop},{self.que_quan}"
+
+def hien_thi_ds(ds_sv, tieu_de="DANH SÁCH SINH VIÊN"):
+    """Hiển thị danh sách sinh viên ra màn hình."""
+    print("\n" + "="*80)
+    print(tieu_de.center(80))
+    print("="*80)
+    print(f"| {'MSSV':<10} | {'Lớp':<10} | {'Họ và Tên':<30} | {'Quê Quán':<20} |")
+    print("-" * 80)
+    for sv in ds_sv:
+        print(f"| {sv.mssv:<10} | {sv.lop:<10} | {sv.ho_lot} {sv.ten:<29-len(sv.ho_lot)} | {sv.que_quan:<20} |")
+    print("-" * 80)
+    print(f"Tổng cộng: {len(ds_sv)} sinh viên.")
+
+def parse_sinh_vien(line):
+    """Phân tích một dòng chuỗi thành đối tượng SinhVien."""
+    try:
+        parts = [p.strip() for p in line.strip().split(',')]
+        if len(parts) == 4:
+            mssv, ho_ten, lop, que_quan = parts
+            ten = ho_ten.split()[-1]
+            ho_lot = " ".join(ho_ten.split()[:-1])
+            return SinhVien(mssv, ho_lot, ten, lop, que_quan)
+    except:
+        return None
+    return None
+
+def tai_len_ds_sv(ten_tap_tin="Sinhvien.txt"):
+    """Tải danh sách sinh viên từ tập tin."""
+    danh_sach_sinh_vien = []
+    if not os.path.exists(ten_tap_tin):
+        print(f"Tệp '{ten_tap_tin}' không tồn tại. Tạo danh sách trống.")
+        return danh_sach_sinh_vien
+        
+    try:
+        with open(ten_tap_tin, 'r', encoding='utf-8') as f:
+            for line in f:
+                sv = parse_sinh_vien(line)
+                if sv:
+                    danh_sach_sinh_vien.append(sv)
+        print(f"Đã tải thành công {len(danh_sach_sinh_vien)} sinh viên từ '{ten_tap_tin}'.")
+    except Exception as e:
+        print(f"Lỗi khi đọc tệp: {e}")
+        
+    return danh_sach_sinh_vien
+
+def nhap_thong_tin_sv():
+    """Nhập thông tin sinh viên mới từ bàn phím."""
+    print("\n--- Nhập Thông Tin Sinh Viên Mới ---")
+    mssv = input("Nhập Mã số sinh viên: ").strip()
+    ho_lot = input("Nhập Họ và chữ lót: ").strip()
+    ten = input("Nhập Tên sinh viên: ").strip()
+    lop = input("Nhập Lớp: ").strip()
+    que_quan = input("Nhập Quê quán: ").strip()
+    
+    if not all([mssv, ho_lot, ten, lop, que_quan]):
+        print("Lỗi: Thông tin không được để trống. Nhập thất bại.")
+        return None
+        
+    return SinhVien(mssv, ho_lot, ten, lop, que_quan)
+
+def sua_thong_tin_sv(ds_sv):
+    """Sửa thông tin sinh viên."""
+    mssv_can_sua = input("Nhập MSSV của sinh viên cần sửa: ").strip()
+    
+    for i, sv in enumerate(ds_sv):
+        if sv.mssv == mssv_can_sua:
+            print(f"Đang sửa thông tin của: {sv.full_name} - MSSV: {sv.mssv}")
+            
+            # Sửa từng trường, nếu người dùng để trống thì giữ nguyên giá trị cũ
+            new_ho_lot = input(f"Họ và chữ lót mới (Mặc định: {sv.ho_lot}): ").strip() or sv.ho_lot
+            new_ten = input(f"Tên mới (Mặc định: {sv.ten}): ").strip() or sv.ten
+            new_lop = input(f"Lớp mới (Mặc định: {sv.lop}): ").strip() or sv.lop
+            new_que_quan = input(f"Quê quán mới (Mặc định: {sv.que_quan}): ").strip() or sv.que_quan
+
+            # Tạo đối tượng mới và cập nhật
+            ds_sv[i] = SinhVien(mssv_can_sua, new_ho_lot, new_ten, new_lop, new_que_quan)
+            print("Đã cập nhật thông tin thành công!")
+            return
+            
+    print(f"Không tìm thấy sinh viên có MSSV: {mssv_can_sua}")
+
+def luu_ds_sv(ds_sv, ten_tap_tin="Sinhvien.txt"):
+    """Lưu toàn bộ danh sách sinh viên vào một tập tin."""
+    try:
+        # Mở tệp ở chế độ ghi ('w') để ghi đè toàn bộ danh sách mới
+        with open(ten_tap_tin, 'w', encoding='utf-8') as f:
+            for sv in ds_sv:
+                f.write(sv.to_file_format() + '\n')
+        print(f"Đã lưu thành công {len(ds_sv)} sinh viên vào '{ten_tap_tin}'.")
+    except Exception as e:
+        print(f"Lỗi khi lưu tệp: {e}")
+
+def luu_theo_lop(ds_sv):
+    """Lưu danh sách sinh viên thành các tập tin riêng biệt theo Lớp."""
+    lop_dict = {}
+    for sv in ds_sv:
+        if sv.lop not in lop_dict:
+            lop_dict[sv.lop] = []
+        lop_dict[sv.lop].append(sv)
+        
+    print("\n--- Lưu Danh Sách Theo Lớp ---")
+    for lop, ds_lop in lop_dict.items():
+        ten_tap_tin = f"Sinhvien_{lop}.txt"
+        try:
+            with open(ten_tap_tin, 'w', encoding='utf-8') as f:
+                for sv in ds_lop:
+                    f.write(sv.to_file_format() + '\n')
+            print(f"Đã lưu {len(ds_lop)} sinh viên lớp {lop} vào '{ten_tap_tin}'.")
+        except Exception as e:
+            print(f"Lỗi khi lưu tệp {ten_tap_tin}: {e}")
+
+def menu_chuong_trinh():
+    """Hiển thị menu và xử lý lựa chọn."""
+    danh_sach_sinh_vien = []
+    
+    while True:
+        print("\n" + "="*40)
+        print(" CHƯƠNG TRÌNH QUẢN LÝ SINH VIÊN ".center(40))
+        print("="*40)
+        print("1. Tải DS Sinh viên từ Sinhvien.txt")
+        print("2. Nhập Thông tin sinh viên mới")
+        print("3. Sửa thông tin sinh viên")
+        print("4. Lưu DS Sinh viên vào Sinhvien.txt")
+        print("5. Hiển thị DS theo Lớp X")
+        print("6. Hiển thị DS theo Tên Y")
+        print("7. Lưu DS thành tệp riêng theo Lớp")
+        print("0. Thoát")
+        print("="*40)
+        
+        chon = input("Nhập lựa chọn của bạn (0-7): ")
+        
+        if chon == '1':
+            danh_sach_sinh_vien = tai_len_ds_sv()
+            if danh_sach_sinh_vien:
+                 hien_thi_ds(danh_sach_sinh_vien, "DANH SÁCH SINH VIÊN VỪA TẢI LÊN")
+        
+        elif chon == '2':
+            sv_moi = nhap_thong_tin_sv()
+            if sv_moi:
+                danh_sach_sinh_vien.append(sv_moi)
+                print(f"Đã thêm sinh viên {sv_moi.full_name}.")
+                
+        elif chon == '3':
+            sua_thong_tin_sv(danh_sach_sinh_vien)
+            
+        elif chon == '4':
+            luu_ds_sv(danh_sach_sinh_vien)
+            
+        elif chon == '5':
+            lop_x = input("Nhập tên Lớp X cần hiển thị: ").strip()
+            ds_loc = [sv for sv in danh_sach_sinh_vien if sv.lop.upper() == lop_x.upper()]
+            hien_thi_ds(ds_loc, f"DANH SÁCH SINH VIÊN LỚP {lop_x.upper()}")
+            
+        elif chon == '6':
+            ten_y = input("Nhập Tên Y cần hiển thị: ").strip()
+            ds_loc = [sv for sv in danh_sach_sinh_vien if sv.ten.upper() == ten_y.upper()]
+            hien_thi_ds(ds_loc, f"DANH SÁCH SINH VIÊN CÓ TÊN '{ten_y}'")
+            
+        elif chon == '7':
+            luu_theo_lop(danh_sach_sinh_vien)
+            
+        elif chon == '0':
+            print("Thoát chương trình. Tạm biệt!")
+            break
+            
+        else:
+            print("Lựa chọn không hợp lệ. Vui lòng nhập lại.")
+
+if __name__ == "__main__":
+    menu_chuong_trinh()

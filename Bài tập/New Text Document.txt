@@ -1,0 +1,115 @@
+# 8B.08 - Quản lý tiêu thụ điện
+from collections import defaultdict
+
+def nhap_thong_tin():
+    while True:
+        phong = input("Số hiệu phòng: ").strip()
+        toa = input("Số hiệu tòa nhà: ").strip()
+        chu = input("Tên chủ hộ: ").strip()
+        try:
+            sokw = float(input("Số kWh tiêu thụ: "))
+        except:
+            print("Vui lòng nhập số!")
+            continue
+        # Chuyển đổi số kw thành chuỗi để tính toán độ rộng cột sau này
+        if phong and toa and chu and sokw >= 0:
+            return [toa, phong, chu, sokw]
+        else:
+            print("Dữ liệu không hợp lệ, nhập lại!")
+
+def tinh_tien_dien(kw):
+    bac = [50, 50, 100, 100, 100]
+    gia = [1678, 1734, 2014, 2536, 2834, 2927]
+    tien = 0
+    for i in range(6):
+        if i < 5:
+            dung = min(kw, bac[i])
+            tien += dung * gia[i]
+            kw -= dung
+            if kw <= 0:
+                break
+        else:
+            tien += kw * gia[i]
+    return tien
+
+def hien_thi_bang(ds):
+    # 1. Định nghĩa tiêu đề cột và tính toán dữ liệu hiển thị (dạng chuỗi)
+    tieu_de = ["Toà", "Phòng", "Chủ hộ", "Điện tiêu thụ", "Tiền điện", "VAT", "Tổng phải trả"]
+    
+    # Chuẩn bị dữ liệu đã định dạng để tính độ dài
+    ds_hien_thi = []
+    for toa, phong, chu, kw in ds:
+        tien = tinh_tien_dien(kw)
+        vat = tien * 0.1
+        tong = tien + vat
+        
+        # Định dạng các giá trị số thành chuỗi
+        kw_str = f"{kw:g}" # Dùng 'g' để loại bỏ các số 0 thừa nếu là số nguyên
+        tien_str = f"{tien:,.0f}"
+        vat_str = f"{vat:,.0f}"
+        tong_str = f"{tong:,.0f}"
+        
+        ds_hien_thi.append([toa, phong, chu, kw_str, tien_str, vat_str, tong_str])
+
+    # 2. Tìm độ dài tối đa cho mỗi cột
+    max_lens = [len(td) for td in tieu_de]
+    
+    for row in ds_hien_thi:
+        for i, item in enumerate(row):
+            max_lens[i] = max(max_lens[i], len(item))
+
+    # Thêm một chút khoảng cách (ví dụ: 3 ký tự) cho mỗi cột
+    khoang_cach = 3
+    max_lens = [length + khoang_cach for length in max_lens]
+
+    # 3. In tiêu đề cột đã căn chỉnh
+    header_line = ""
+    for i, td in enumerate(tieu_de):
+        # Căn lề trái
+        header_line += td.ljust(max_lens[i])
+    print(header_line)
+    print("-" * sum(max_lens)) # Đường kẻ ngang
+
+    # 4. In dữ liệu đã căn chỉnh
+    for row in ds_hien_thi:
+        data_line = ""
+        for i, item in enumerate(row):
+            # Căn lề trái
+            data_line += item.ljust(max_lens[i])
+        print(data_line)
+
+
+# --- Khối chạy chính ---
+ds = []
+try:
+    n = int(input("Nhập số hộ dân: "))
+except ValueError:
+    print("Vui lòng nhập một số nguyên.")
+    n = 0
+    
+for i in range(n):
+    print(f"--- Hộ {i+1} ---")
+    ds.append(nhap_thong_tin())
+
+# Hiển thị bảng
+if ds:
+    print("\n--- BẢNG THỐNG KÊ TIÊU THỤ ĐIỆN ---")
+    hien_thi_bang(ds)
+else:
+    print("Không có dữ liệu để hiển thị.")
+
+# Ghi ra file theo tòa nhà
+ds_toa = defaultdict(list)
+for toa, phong, chu, kw in ds:
+    ds_toa[toa].append((phong, chu, kw))
+
+if ds_toa:
+    for toa, danh_sach in ds_toa.items():
+        tenfile = f"{toa}.txt"
+        with open(tenfile, "a", encoding="utf-8") as f:
+            for phong, chu, kw in danh_sach:
+                tien = tinh_tien_dien(kw)
+                vat = tien * 0.1
+                tong = tien + vat
+                f.write(f"{toa},{phong},{chu},{kw},{tien},{vat},{tong}\n")
+    print("\nĐã lưu thông tin theo từng tòa.")
